@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactFlow, {
   Background,
   Controls,
@@ -27,6 +27,24 @@ export default function DashboardPage() {
   const [stateFilter, setStateFilter] = useState<ConditionalAccessPolicyState | 'all'>('all')
   const [isExporting, setIsExporting] = useState(false)
   const flowRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Escape — close detail panel
+      if (e.key === 'Escape' && selectedPolicy) {
+        setSelectedPolicy(null)
+      }
+      // Ctrl/Cmd + K — focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedPolicy])
 
   const handleLogout = useCallback(() => {
     instance.logoutPopup().catch(console.error)
@@ -145,6 +163,7 @@ export default function DashboardPage() {
       {/* Filters */}
       {policies.length > 0 && (
         <PolicyFilters
+          ref={searchInputRef}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           stateFilter={stateFilter}

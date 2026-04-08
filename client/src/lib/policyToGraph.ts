@@ -211,6 +211,7 @@ export function policyToGraph(policy: ConditionalAccessPolicy): { nodes: Node[];
       source: policyNodeId,
       target: condId,
       type: 'smoothstep',
+      animated: true,
     })
   }
 
