@@ -14,11 +14,13 @@ import { applyDagreLayout } from '@/lib/layoutGraph'
 import { nodeTypes } from '@/components/flow/nodeTypes'
 import { PolicyDetailPanel } from '@/components/PolicyDetailPanel'
 import { PolicyFilters } from '@/components/PolicyFilters'
+import { useTheme } from '@/hooks/useTheme'
 import type { ConditionalAccessPolicy, ConditionalAccessPolicyState } from '@/types/policy'
 
 export default function DashboardPage() {
   const { instance, accounts } = useMsal()
   const { policies, isLoading, error, refetch } = useConditionalAccessPolicies()
+  const { theme, toggleTheme } = useTheme()
   const [selectedPolicy, setSelectedPolicy] = useState<ConditionalAccessPolicy | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [stateFilter, setStateFilter] = useState<ConditionalAccessPolicyState | 'all'>('all')
@@ -96,6 +98,22 @@ export default function DashboardPage() {
       <header className="flex items-center justify-between px-6 py-4 border-b border-border">
         <h1 className="text-xl font-bold">CA Policy Visualizer</h1>
         <div className="flex items-center gap-4">
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+              </svg>
+            )}
+          </button>
           <span className="text-sm text-muted-foreground">
             {accounts[0]?.username ?? ''}
           </span>
