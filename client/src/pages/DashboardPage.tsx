@@ -1,8 +1,9 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import ReactFlow, {
   Background,
   Controls,
   MiniMap,
+  type NodeMouseHandler,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useMsal } from '@azure/msal-react'
@@ -10,10 +11,13 @@ import { useConditionalAccessPolicies } from '@/hooks/useConditionalAccessPolici
 import { policiesToGraph } from '@/lib/policyToGraph'
 import { applyDagreLayout } from '@/lib/layoutGraph'
 import { nodeTypes } from '@/components/flow/nodeTypes'
+import { PolicyDetailPanel } from '@/components/PolicyDetailPanel'
+import type { ConditionalAccessPolicy } from '@/types/policy'
 
 export default function DashboardPage() {
   const { instance, accounts } = useMsal()
   const { policies, isLoading, error, refetch } = useConditionalAccessPolicies()
+  const [selectedPolicy, setSelectedPolicy] = useState<ConditionalAccessPolicy | null>(null)
 
   const handleLogout = useCallback(() => {
     instance.logoutPopup().catch(console.error)
@@ -25,6 +29,21 @@ export default function DashboardPage() {
     const layoutNodes = applyDagreLayout(graph.nodes, graph.edges)
     return { nodes: layoutNodes, edges: graph.edges }
   }, [policies])
+
+  const onNodeClick: NodeMouseHandler = useCallback(
+    (_event, node) => {
+      if (node.type !== 'policy') return
+      // The policy node id is `{policyId}-root`, extract the original id
+      const policyId = node.id.replace(/-root$/, '')
+      const policy = policies.find((p) => p.id === policyId)
+      if (policy) setSelectedPolicy(policy)
+    },
+    [policies],
+  )
+
+  const handleClosePanel = useCallback(() => {
+    setSelectedPolicy(null)
+  }, [])
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
@@ -69,27 +88,34 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* React Flow canvas */}
-      <div className="flex-1">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-          attributionPosition="bottom-right"
-          proOptions={{ hideAttribution: true }}
-        >
-          <Background />
-          <Controls />
-          <MiniMap
-            nodeColor={(node) => {
-              if (node.type === 'policy') return 'hsl(var(--primary))'
-              if (node.type === 'condition') return 'hsl(var(--secondary))'
-              return 'hsl(var(--accent))'
-            }}
-          />
-        </ReactFlow>
+      {/* Main content: canvas + optional detail panel */}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            onNodeClick={onNodeClick}
+            fitView
+            fitViewOptions={{ padding: 0.2 }}
+            attributionPosition="bottom-right"
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background />
+            <Controls />
+            <MiniMap
+              nodeColor={(node) => {
+                if (node.type === 'policy') return 'hsl(var(--primary))'
+                if (node.type === 'condition') return 'hsl(var(--secondary))'
+                return 'hsl(var(--accent))'
+              }}
+            />
+          </ReactFlow>
+        </div>
+
+        {selectedPolicy && (
+          <PolicyDetailPanel policy={selectedPolicy} onClose={handleClosePanel} />
+        )}
       </div>
     </div>
   )
