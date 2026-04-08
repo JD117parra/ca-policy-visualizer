@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     client_secret: str
     port: int = 8000
 
+    # Comma-separated list of allowed CORS origins.
+    # Example: CORS_ORIGINS=http://localhost:5173,https://myapp.azurewebsites.net
+    cors_origins: list[str] = ["http://localhost:5173"]
+
+    # Enable HSTS header. Set to True when serving behind HTTPS in production.
+    enforce_https: bool = False
+
 
 @lru_cache
 def get_settings() -> Settings:
