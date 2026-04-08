@@ -25,9 +25,9 @@ export const PolicyFilters = forwardRef<HTMLInputElement, PolicyFiltersProps>(
     ref,
   ) {
     return (
-      <div className="flex items-center gap-4 px-6 py-3 border-b border-border bg-muted/30">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 border-b border-border bg-muted/30">
         {/* Search */}
-        <div className="relative flex-1 max-w-xs">
+        <div className="relative flex-1 sm:max-w-xs">
           <svg
             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
             width="14"

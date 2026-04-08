@@ -114,9 +114,9 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h1 className="text-xl font-bold">CA Policy Visualizer</h1>
-        <div className="flex items-center gap-4">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border">
+        <h1 className="text-lg sm:text-xl font-bold truncate">CA Policy Visualizer</h1>
+        <div className="flex items-center gap-2 sm:gap-4">
           <button
             onClick={toggleTheme}
             className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground"
@@ -133,14 +133,14 @@ export default function DashboardPage() {
               </svg>
             )}
           </button>
-          <span className="text-sm text-muted-foreground">
+          <span className="hidden sm:inline text-sm text-muted-foreground truncate max-w-[150px]">
             {accounts[0]?.username ?? ''}
           </span>
           {nodes.length > 0 && (
             <button
               onClick={handleExportPng}
               disabled={isExporting}
-              className="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="hidden sm:inline-flex px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {isExporting ? 'Exporting...' : 'Export PNG'}
             </button>

@@ -52,7 +52,14 @@ export function PolicyDetailPanel({ policy, onClose }: PolicyDetailPanelProps) {
   const session = policy.sessionControls
 
   return (
-    <div className="w-[380px] border-l border-border bg-card flex flex-col h-full">
+    <>
+      {/* Backdrop for mobile */}
+      <div
+        className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+    <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[380px] border-l border-border bg-card flex flex-col lg:static lg:z-auto lg:w-[380px]">
       {/* Header */}
       <div className="flex items-start justify-between gap-2 p-4 border-b border-border">
         <div className="min-w-0 flex-1">
@@ -280,5 +287,6 @@ export function PolicyDetailPanel({ policy, onClose }: PolicyDetailPanelProps) {
         </div>
       </ScrollArea>
     </div>
+    </>
   )
 }
