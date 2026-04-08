@@ -1,4 +1,5 @@
 import type { ConditionalAccessPolicy } from '@/types/policy'
+import { policiesArraySchema } from '@/schemas/policy'
 
 const API_BASE = '/api'
 
@@ -6,6 +7,8 @@ const API_BASE = '/api'
  * Fetches all Conditional Access policies from the FastAPI backend.
  * The backend proxies the request to Microsoft Graph using its own
  * ClientSecretCredential (app-level auth, Policy.Read.All scope).
+ *
+ * Validates the response shape at runtime with Zod before returning.
  *
  * @param accessToken - MSAL-issued access token forwarded to the backend
  *                      so the middleware can verify the request is authenticated.
@@ -19,9 +22,9 @@ export async function fetchPolicies(accessToken: string): Promise<ConditionalAcc
   })
 
   if (!response.ok) {
-    const errorBody = await response.text()
-    throw new Error(`Failed to fetch policies: ${response.status} ${errorBody}`)
+    throw new Error(`Failed to fetch policies (${response.status})`)
   }
 
-  return response.json() as Promise<ConditionalAccessPolicy[]>
+  const data: unknown = await response.json()
+  return policiesArraySchema.parse(data) as ConditionalAccessPolicy[]
 }

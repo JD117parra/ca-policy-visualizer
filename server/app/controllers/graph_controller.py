@@ -5,13 +5,21 @@ Uses azure-identity ClientSecretCredential (app-level auth) to acquire a token
 scoped to Microsoft Graph, then calls the Conditional Access policies endpoint.
 Pagination is handled automatically by following @odata.nextLink.
 """
+import logging
+
 import httpx
 from azure.identity import ClientSecretCredential
 from azure.core.exceptions import ClientAuthenticationError
 
 from app.settings import get_settings
 
+logger = logging.getLogger(__name__)
+
 GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0"
+
+# ClientSecretCredential (client_credentials flow) requires the .default scope.
+# The actual permissions are governed by the App Registration in Azure Portal.
+# Ensure only Policy.Read.All is granted — no additional Graph permissions.
 GRAPH_SCOPE = "https://graph.microsoft.com/.default"
 
 
@@ -41,7 +49,8 @@ async def get_conditional_access_policies() -> list[dict]:
     try:
         token = credential.get_token(GRAPH_SCOPE)
     except ClientAuthenticationError as exc:
-        raise RuntimeError(f"Failed to acquire Graph token: {exc}") from exc
+        logger.error("Failed to acquire Graph token: %s", exc)
+        raise RuntimeError("Failed to acquire Graph token") from exc
 
     headers = {
         "Authorization": f"Bearer {token.token}",
@@ -59,4 +68,5 @@ async def get_conditional_access_policies() -> list[dict]:
             policies.extend(body.get("value", []))
             url = body.get("@odata.nextLink")
 
+    logger.info("Fetched %d conditional access policies", len(policies))
     return policies

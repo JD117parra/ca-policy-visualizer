@@ -1,11 +1,18 @@
 """
 Conditional Access policies route.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.middleware.auth import require_bearer_token
 from app.controllers.graph_controller import get_conditional_access_policies
 
+logger = logging.getLogger(__name__)
+
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(tags=["policies"])
 
 
@@ -18,7 +25,9 @@ router = APIRouter(tags=["policies"])
         "token in the Authorization header."
     ),
 )
+@limiter.limit("10/minute")
 async def list_policies(
+    request: Request,
     _token: str = Depends(require_bearer_token),
 ) -> list[dict]:
     """
@@ -30,12 +39,14 @@ async def list_policies(
     try:
         return await get_conditional_access_policies()
     except RuntimeError as exc:
+        logger.error("Graph API error: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=str(exc),
+            detail="Failed to retrieve policies from Microsoft Graph.",
         ) from exc
     except Exception as exc:
+        logger.exception("Unexpected error in /api/policies")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Unexpected error fetching policies: {exc}",
+            detail="An internal error occurred. Please try again later.",
         ) from exc

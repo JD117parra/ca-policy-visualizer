@@ -3,10 +3,11 @@ import { useMsal, useIsAuthenticated } from '@azure/msal-react'
 import { fetchPolicies } from '@/services/graphService'
 import type { ConditionalAccessPolicy } from '@/types/policy'
 
-// openid + profile are sufficient for the backend to verify the user is
-// authenticated. The backend calls Graph with its own ClientSecretCredential.
+// Use the app's own client_id as scope so the access token has the correct
+// audience for backend validation. The backend calls Graph with its own
+// ClientSecretCredential.
 const LOGIN_REQUEST = {
-  scopes: ['openid', 'profile'],
+  scopes: [`${import.meta.env.VITE_CLIENT_ID}/.default`],
 }
 
 interface UsePoliciesResult {
@@ -31,10 +32,14 @@ export function useConditionalAccessPolicies(): UsePoliciesResult {
     setError(null)
 
     try {
-      // Attempt silent token acquisition; fall back to popup on interaction required
-      const tokenResponse = await instance
-        .acquireTokenSilent({ ...LOGIN_REQUEST, account: accounts[0] })
-        .catch(() => instance.acquireTokenPopup(LOGIN_REQUEST))
+      // Attempt silent token acquisition; fall back to redirect on interaction required
+      let tokenResponse
+      try {
+        tokenResponse = await instance.acquireTokenSilent({ ...LOGIN_REQUEST, account: accounts[0] })
+      } catch {
+        await instance.acquireTokenRedirect(LOGIN_REQUEST)
+        return // browser will redirect
+      }
 
       const data = await fetchPolicies(tokenResponse.accessToken)
       setPolicies(data)
