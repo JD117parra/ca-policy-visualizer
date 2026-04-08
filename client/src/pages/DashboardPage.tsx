@@ -1,32 +1,15 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import ReactFlow, {
   Background,
   Controls,
   MiniMap,
-  type Node,
-  type Edge,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useMsal } from '@azure/msal-react'
 import { useConditionalAccessPolicies } from '@/hooks/useConditionalAccessPolicies'
-import type { ConditionalAccessPolicy } from '@/types/policy'
-
-// Maps each policy to a React Flow node, laid out in a horizontal grid
-function policiesToNodes(policies: ConditionalAccessPolicy[]): Node[] {
-  return policies.map((policy, index) => ({
-    id: policy.id,
-    type: 'default',
-    position: { x: index * 280, y: 100 },
-    data: {
-      label: (
-        <div className="text-left p-1">
-          <p className="font-semibold text-sm truncate max-w-[200px]">{policy.displayName}</p>
-          <p className="text-xs text-muted-foreground capitalize">{policy.state}</p>
-        </div>
-      ),
-    },
-  }))
-}
+import { policiesToGraph } from '@/lib/policyToGraph'
+import { applyDagreLayout } from '@/lib/layoutGraph'
+import { nodeTypes } from '@/components/flow/nodeTypes'
 
 export default function DashboardPage() {
   const { instance, accounts } = useMsal()
@@ -36,14 +19,25 @@ export default function DashboardPage() {
     instance.logoutPopup().catch(console.error)
   }, [instance])
 
-  const nodes: Node[] = policiesToNodes(policies)
-  const edges: Edge[] = []
+  const { nodes, edges } = useMemo(() => {
+    if (policies.length === 0) return { nodes: [], edges: [] }
+    const graph = policiesToGraph(policies)
+    const layoutNodes = applyDagreLayout(graph.nodes, graph.edges)
+    return { nodes: layoutNodes, edges: graph.edges }
+  }, [policies])
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h1 className="text-xl font-bold">CA Policy Visualizer</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold">CA Policy Visualizer</h1>
+          {policies.length > 0 && (
+            <span className="text-sm text-muted-foreground">
+              {policies.length} {policies.length === 1 ? 'policy' : 'policies'}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-muted-foreground">
             {accounts[0]?.username ?? ''}
@@ -80,12 +74,21 @@ export default function DashboardPage() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          nodeTypes={nodeTypes}
           fitView
+          fitViewOptions={{ padding: 0.2 }}
           attributionPosition="bottom-right"
+          proOptions={{ hideAttribution: true }}
         >
           <Background />
           <Controls />
-          <MiniMap />
+          <MiniMap
+            nodeColor={(node) => {
+              if (node.type === 'policy') return 'hsl(var(--primary))'
+              if (node.type === 'condition') return 'hsl(var(--secondary))'
+              return 'hsl(var(--accent))'
+            }}
+          />
         </ReactFlow>
       </div>
     </div>
