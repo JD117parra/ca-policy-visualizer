@@ -17,12 +17,15 @@ const categoryStyles: Record<ConditionNodeData['category'], string> = {
 }
 
 export function ConditionNode({ data }: NodeProps<ConditionNodeData>) {
+  const tooltipText = data.items.join('\n')
+
   return (
     <div
       className={cn(
-        'rounded-md border px-3 py-2 shadow-sm min-w-[160px] max-w-[220px]',
+        'rounded-md border px-3 py-2 shadow-sm min-w-[160px] max-w-[220px] transition-shadow duration-200 hover:shadow-md',
         categoryStyles[data.category],
       )}
+      title={tooltipText}
     >
       <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-2 !h-2" />
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">

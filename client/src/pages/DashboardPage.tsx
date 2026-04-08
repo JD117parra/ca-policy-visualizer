@@ -38,8 +38,19 @@ export default function DashboardPage() {
     if (filteredPolicies.length === 0) return { nodes: [], edges: [] }
     const graph = policiesToGraph(filteredPolicies)
     const layoutNodes = applyDagreLayout(graph.nodes, graph.edges)
+
+    // Mark the selected policy node
+    if (selectedPolicy) {
+      const selectedNodeId = `${selectedPolicy.id}-root`
+      for (const node of layoutNodes) {
+        if (node.id === selectedNodeId && node.type === 'policy') {
+          node.data = { ...node.data, selected: true }
+        }
+      }
+    }
+
     return { nodes: layoutNodes, edges: graph.edges }
-  }, [filteredPolicies])
+  }, [filteredPolicies, selectedPolicy])
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_event, node) => {

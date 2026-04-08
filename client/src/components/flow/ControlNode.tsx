@@ -9,14 +9,17 @@ export interface ControlNodeData {
 }
 
 export function ControlNode({ data }: NodeProps<ControlNodeData>) {
+  const tooltipText = data.items.join('\n')
+
   return (
     <div
       className={cn(
-        'rounded-md border px-3 py-2 shadow-sm min-w-[160px] max-w-[220px]',
+        'rounded-md border px-3 py-2 shadow-sm min-w-[160px] max-w-[220px] transition-shadow duration-200 hover:shadow-md',
         data.kind === 'grant'
           ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950'
           : 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950',
       )}
+      title={tooltipText}
     >
       <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-2 !h-2" />
       <div className="flex items-center gap-1.5 mb-1">
