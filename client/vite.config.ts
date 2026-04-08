@@ -10,6 +10,16 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          msal: ['@azure/msal-browser', '@azure/msal-react'],
+          flow: ['reactflow', '@dagrejs/dagre'],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {
