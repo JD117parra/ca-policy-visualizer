@@ -43,7 +43,7 @@ export default function LoginPage() {
   const { theme, toggleTheme } = useTheme()
 
   const handleLogin = () => {
-    instance.loginPopup(LOGIN_REQUEST).catch(console.error)
+    instance.loginRedirect(LOGIN_REQUEST).catch(console.error)
   }
 
   return (
