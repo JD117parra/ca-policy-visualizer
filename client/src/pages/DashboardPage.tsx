@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import ReactFlow, {
   Background,
   Controls,
@@ -6,6 +6,7 @@ import ReactFlow, {
   type NodeMouseHandler,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
+import { toPng } from 'html-to-image'
 import { useMsal } from '@azure/msal-react'
 import { useConditionalAccessPolicies } from '@/hooks/useConditionalAccessPolicies'
 import { policiesToGraph } from '@/lib/policyToGraph'
@@ -21,6 +22,8 @@ export default function DashboardPage() {
   const [selectedPolicy, setSelectedPolicy] = useState<ConditionalAccessPolicy | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [stateFilter, setStateFilter] = useState<ConditionalAccessPolicyState | 'all'>('all')
+  const [isExporting, setIsExporting] = useState(false)
+  const flowRef = useRef<HTMLDivElement>(null)
 
   const handleLogout = useCallback(() => {
     instance.logoutPopup().catch(console.error)
@@ -66,6 +69,27 @@ export default function DashboardPage() {
     setSelectedPolicy(null)
   }, [])
 
+  const handleExportPng = useCallback(async () => {
+    const viewport = flowRef.current?.querySelector('.react-flow__viewport') as HTMLElement | null
+    if (!viewport) return
+
+    setIsExporting(true)
+    try {
+      const dataUrl = await toPng(viewport, {
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+      })
+      const link = document.createElement('a')
+      link.download = 'ca-policies.png'
+      link.href = dataUrl
+      link.click()
+    } catch {
+      console.error('Failed to export diagram')
+    } finally {
+      setIsExporting(false)
+    }
+  }, [])
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header */}
@@ -75,6 +99,15 @@ export default function DashboardPage() {
           <span className="text-sm text-muted-foreground">
             {accounts[0]?.username ?? ''}
           </span>
+          {nodes.length > 0 && (
+            <button
+              onClick={handleExportPng}
+              disabled={isExporting}
+              className="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {isExporting ? 'Exporting...' : 'Export PNG'}
+            </button>
+          )}
           <button
             onClick={refetch}
             className="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:opacity-90 transition-opacity"
@@ -123,7 +156,7 @@ export default function DashboardPage() {
 
       {/* Main content: canvas + optional detail panel */}
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1">
+        <div className="flex-1" ref={flowRef}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
