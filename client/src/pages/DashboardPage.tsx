@@ -14,6 +14,7 @@ import { applyDagreLayout } from '@/lib/layoutGraph'
 import { nodeTypes } from '@/components/flow/nodeTypes'
 import { PolicyDetailPanel } from '@/components/PolicyDetailPanel'
 import { PolicyFilters } from '@/components/PolicyFilters'
+import { SkeletonLoader } from '@/components/SkeletonLoader'
 import { useTheme } from '@/hooks/useTheme'
 import type { ConditionalAccessPolicy, ConditionalAccessPolicyState } from '@/types/policy'
 
@@ -153,12 +154,7 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Status bar */}
-      {isLoading && (
-        <div className="px-6 py-2 bg-muted text-muted-foreground text-sm">
-          Loading policies...
-        </div>
-      )}
+      {/* Error bar */}
       {error && (
         <div className="px-6 py-2 bg-destructive/10 text-destructive text-sm">
           Error: {error}
@@ -172,7 +168,10 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Main content: canvas + optional detail panel */}
+      {/* Main content */}
+      {isLoading ? (
+        <SkeletonLoader />
+      ) : (
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1" ref={flowRef}>
           <ReactFlow
@@ -201,6 +200,7 @@ export default function DashboardPage() {
           <PolicyDetailPanel policy={selectedPolicy} onClose={handleClosePanel} />
         )}
       </div>
+      )}
     </div>
   )
 }
